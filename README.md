@@ -1,22 +1,34 @@
-# Backuper
+# Whitelist
 A Plugin plugin in Python for Endstone
 
 ## Usage
-create folder in dir /plugins/configuration/backuper
+create folder in dir /plugins/configuration/whitelist
 
 
-than in this folder create file conf.json
+than in this folder create file config.json
 this file should have this fields
 
 ```json
 {
-    "world_folder_name": "Bedrock level", //name of world folder
-    "backups_count": 0, //specifies max count of backups that this plugin will store
-    "delay": 0, //specifies delay before first backup on start
-    "period": 0 //specifies delay between backups
+    "profile": "<profile name>"
 }
 ```
+and then u need to create file \<profile name\>.json with this fields
 
-note all time intervals are in minecraft ticks 1 second = 20 ticks
+```json
+[
+    "<your nickname in mc>"
+]
+```
 
-note that plugin create backups on server shutdown
+plugin also contains commands such as
+
+/wl add - \<name\> adds user to whitelist
+
+/wl remove - \<name\> removes user from whitelist
+
+/wl profile - \<name\> set profile to use
+
+/wl view - shows all users that are in used profile
+
+/wl check - check players that are online and if they are not in whitelist kicks them usually used after profile change 
