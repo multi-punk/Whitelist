@@ -2,6 +2,7 @@ from endstone.plugin import Plugin
 from endstone_whitelist.commands.commands import register_commands
 from endstone_whitelist.commands.whitelist import WhitelistCommandExecutor
 from endstone_whitelist.listener import Listener
+import endstone_whitelist.api.api as api
 
 
 class WhitelistPlugin(Plugin):
@@ -12,7 +13,10 @@ class WhitelistPlugin(Plugin):
         "wl": {
             "description": "Whitelist player",
             "usages": [ 
-                "/wl (add|remove)<name: Action> <names: message>" 
+                "/wl (add|remove)<name: Action> <names: message>" ,
+                "/wl (profile)<name: Action> <name: str>",
+                "/wl (check)<name: Action>",
+                "/wl (view)<name: Action>"
             ],
             "permissions": ["wl.command.use"]
         }

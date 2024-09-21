@@ -8,6 +8,9 @@ packages = ["src/endstone_whitelist"]
 [project]
 name = "endstone_whitelist"
 version = "0.1.0"
+dependencies = [
+    "flask"
+]
 
 [project.entry-points."endstone"]
 whitelist = "endstone_whitelist:WhitelistPlugin"

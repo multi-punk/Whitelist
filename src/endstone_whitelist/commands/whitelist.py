@@ -3,7 +3,8 @@ from endstone.command import Command, CommandSender, CommandExecutor
 from endstone.form import ModalForm
 from endstone.form import *
 from endstone.plugin import Plugin
-from endstone_whitelist.tools.config_provider import GetConfiguration, SetConfiguration
+from endstone_whitelist.tools.config_provider import GetConfiguration
+from endstone_whitelist.tools.whitelist_commands import add_to_whitelist, change_whitelist_profile, check_players_on_server, remove_from_whitelist
 
 class WhitelistCommandExecutor(CommandExecutor):
 
@@ -15,32 +16,42 @@ class WhitelistCommandExecutor(CommandExecutor):
         if not isinstance(sender, Player): return True
 
         actionType = args[0]
-        names = args[1]
-        names = names.split(",")
-        names = list(map(lambda name: name.strip(), names))
 
-        if actionType == "add":
-            self.add(names)
-        elif actionType == "remove":
-            self.remove(names)
+        if len(args) >= 2:
+            names = args[1]
+            names = names.split(",")
+            names = list(map(lambda name: name.strip(), names))
+            print(names)
 
-    def add(self, names: list[str]):
-        whitelist: list[str] = GetConfiguration("whitelist")
-        print(whitelist)
-        for name in names:
-            if name not in whitelist:
-                whitelist.append(name)
-        print(whitelist)
-        SetConfiguration("whitelist", whitelist)
-        
+            if actionType == "add":
+                add_to_whitelist(names)
+            elif actionType == "remove":
+                remove_from_whitelist(self._plugin, names)
 
-    def remove(self, names: list[str]):
-        whitelist: list[str] = GetConfiguration("whitelist")
-        for name in names:
-            if name in whitelist:
-                whitelist = [x for x in whitelist if x != name]
-        print(whitelist)
-        SetConfiguration("whitelist", whitelist)
-        for player in self._plugin.server.online_players:
-            if player.name in names:
-                player.kick("You are have been removed from the whitelist")
+        if actionType == "profile":
+            change_whitelist_profile(args[1])
+        elif actionType == "view":
+            self.send_view_form(sender)
+        elif actionType == "check":
+            check_players_on_server(self._plugin)
+
+        return True
+
+    def send_view_form(self, player: CommandSender):
+        if not isinstance(player, Player): return
+
+        config = GetConfiguration("config")
+
+        try:
+            whitelist: list[str] = GetConfiguration(config["profile"])
+        except:
+            whitelist: list[str] = []
+
+        buttons = list(map(lambda name: ActionForm.Button(text=name), whitelist))
+
+        form = ActionForm(
+            title="Whitelist",
+            buttons=buttons
+        )
+
+        player.send_form(form)
