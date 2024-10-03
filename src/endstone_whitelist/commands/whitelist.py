@@ -4,7 +4,7 @@ from endstone.form import ModalForm
 from endstone.form import *
 from endstone.plugin import Plugin
 from endstone_whitelist.tools.config_provider import GetConfiguration
-from endstone_whitelist.tools.whitelist_commands import add_to_whitelist, change_whitelist_profile, check_players_on_server, remove_from_whitelist
+from endstone_whitelist.tools.whitelist_commands import add_to_profile, change_whitelist_profile, check_players_on_server, remove_from_profile_with_kick
 
 class WhitelistCommandExecutor(CommandExecutor):
 
@@ -13,9 +13,9 @@ class WhitelistCommandExecutor(CommandExecutor):
         self._plugin = plugin
 
     def on_command(self, sender: CommandSender, command: Command, args: list[str]) -> bool:
-        if not isinstance(sender, Player): return True
-
         actionType = args[0]
+        message: str | None = None
+        config = GetConfiguration("config")
 
         if len(args) >= 2:
             names = args[1]
@@ -24,16 +24,21 @@ class WhitelistCommandExecutor(CommandExecutor):
             print(names)
 
             if actionType == "add":
-                add_to_whitelist(names)
+                message = add_to_profile(names, config["profile"])
             elif actionType == "remove":
-                remove_from_whitelist(self._plugin, names)
+                message = remove_from_profile_with_kick(self._plugin, names, config["profile"])
 
         if actionType == "profile":
-            change_whitelist_profile(args[1])
+            message = change_whitelist_profile(args[1])
         elif actionType == "view":
             self.send_view_form(sender)
         elif actionType == "check":
             check_players_on_server(self._plugin)
+
+        if not isinstance(sender, Player): return True
+
+        if message is not None:
+            sender.send_message(message)
 
         return True
 
@@ -42,15 +47,17 @@ class WhitelistCommandExecutor(CommandExecutor):
 
         config = GetConfiguration("config")
 
+        profile = config["profile"]
+
         try:
-            whitelist: list[str] = GetConfiguration(config["profile"])
+            whitelist: list[str] = GetConfiguration(profile)
         except:
             whitelist: list[str] = []
 
         buttons = list(map(lambda name: ActionForm.Button(text=name), whitelist))
 
         form = ActionForm(
-            title="Whitelist",
+            title=f"Whitelist with profile: {profile}",
             buttons=buttons
         )
 

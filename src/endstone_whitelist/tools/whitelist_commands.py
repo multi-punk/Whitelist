@@ -1,18 +1,18 @@
+from endstone import Player
 from endstone.plugin import Plugin
 from endstone_whitelist.tools.config_provider import GetConfiguration, SetConfiguration
 
-def change_whitelist_profile(name: str):
+def change_whitelist_profile(name: str) -> str | None:
     config = {
         "profile": name
     }
     SetConfiguration("config", config)
+    return f"Changed whitelist profile to {name}"
     
 
-def add_to_whitelist(names: list[str]):
-    config = GetConfiguration("config")
-
+def add_to_profile(names: list[str], profile: str) -> str | None:
     try:
-        whitelist: list[str] = GetConfiguration(config["profile"])
+        whitelist: list[str] = GetConfiguration(profile)
     except:
         whitelist = []
 
@@ -20,32 +20,31 @@ def add_to_whitelist(names: list[str]):
         if name not in whitelist:
             whitelist.append(name)
 
-    SetConfiguration(config["profile"], whitelist)
+    SetConfiguration(profile, whitelist)
         
 
-def remove_from_whitelist(plugin: Plugin, names: list[str]):
-    config = GetConfiguration("config")
+def remove_from_profile_with_kick(plugin: Plugin, names: list[str], profile: str) -> str | None:
+    remove_from_profile(names, profile)
 
+    for player in plugin.server.online_players:
+        if player.name in names:
+            player.kick("You are have been removed from the whitelist")
+
+def remove_from_profile(names: list[str], profile: str) -> str | None:
     try:
-        whitelist: list[str] = GetConfiguration(config["profile"])
+        whitelist: list[str] = GetConfiguration(profile)
     except:
         whitelist = []
 
     for name in names:
         if name in whitelist:
             whitelist = [x for x in whitelist if x != name]
+        
+    SetConfiguration(profile, whitelist)
 
-    SetConfiguration(config["profile"], whitelist)
-
-    for player in plugin.server.online_players:
-        if player.name in names:
-            player.kick("You are have been removed from the whitelist")
-
-def check_players_on_server(plugin: Plugin):
-    config = GetConfiguration("config")
-
+def check_players_on_server(plugin: Plugin, profile: str):
     try:
-        whitelist: list[str] = GetConfiguration(config["profile"])
+        whitelist: list[str] = GetConfiguration(profile)
     except:
         whitelist = []
 
