@@ -3,8 +3,11 @@ from endstone.plugin import Plugin
 from endstone_whitelist.tools.config_provider import GetConfiguration, SetConfiguration
 
 def change_whitelist_profile(name: str) -> str | None:
+    old_config = GetConfiguration("config")
     config = {
-        "profile": name
+        "profile": name,
+        "key": old_config["key"],
+        "port": old_config["port"]
     }
     SetConfiguration("config", config)
     return f"Changed whitelist profile to {name}"
