@@ -9,7 +9,8 @@ packages = ["src/endstone_whitelist"]
 name = "endstone_whitelist"
 version = "0.1.0"
 dependencies = [
-    "flask"
+    "flask",
+    "ujson"
 ]
 
 [project.entry-points."endstone"]

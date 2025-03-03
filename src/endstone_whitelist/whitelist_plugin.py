@@ -1,15 +1,15 @@
 from endstone.plugin import Plugin
 from endstone_whitelist.commands.commands import register_commands
-from endstone_whitelist.commands.whitelist import WhitelistCommandExecutor
 from endstone_whitelist.listener import Listener
 import multiprocessing as mp
+import threading as th
 import endstone_whitelist.api.api as api
-from endstone_whitelist.tools.config_provider import GetConfiguration
+from endstone_whitelist.types.storage import storage
 
 
 class WhitelistPlugin(Plugin):
     version = "0.1.0"
-    api_version = "0.5"
+    api_version = "0.6"
     apiServerProcess: mp.Process | None = None
 
     commands = {
@@ -17,11 +17,12 @@ class WhitelistPlugin(Plugin):
             "description": "Whitelist player",
             "usages": [ 
                 "/wl (add|remove)<name: Action> <names: message>" ,
-                "/wl (profile)<name: Action> <name: str>",
-                "/wl (check)<name: Action>",
-                "/wl (view)<name: Action>",
-                # "/wl (ban)<name: Action> <names: message>",
-                # "/wl (un-ban)<name: Action> <names: message>"
+                "/wl profile <name: str>",
+                "/wl check",
+                "/wl view (profile|ban)<name: Type>",
+
+                "/wl ban <name: str> <reason: message>",
+                "/wl un-ban <name: str>"
             ],
             "permissions": ["wl.command.use"]
         }
@@ -39,9 +40,11 @@ class WhitelistPlugin(Plugin):
 
     def on_enable(self) -> None:
         self.logger.info("Whitelist plugin is load")
+
+        storage.init(self)
         
-        self.apiServerProcess = mp.Process(target=start_api)
-        self.apiServerProcess.start()
+        self.apiThread = th.Thread(target=start_api)
+        self.apiThread.start()
 
         register_commands(self)
 
@@ -49,9 +52,5 @@ class WhitelistPlugin(Plugin):
         self._listener = Listener(self)
         self.register_events(self._listener)
 
-    def on_disable(self) -> None:
-        self.apiServerProcess.kill()
-
 def start_api():
-    config = GetConfiguration("config")
-    api.app.run(host="0.0.0.0", port=config["port"], debug=False)
+    api.app.run(host="0.0.0.0", port=storage.config["port"], debug=False)

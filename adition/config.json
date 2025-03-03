@@ -1,0 +1,45 @@
+{
+  "key": "hello",
+  "port": 29132,
+  "profile": "whitelist",
+  "ban": {
+    "profile": "banned",
+    "message": "Your where banned, reason: {reason}",
+    "multi-account": {
+      "ban": true,
+      "reason": "multi account" 
+    }
+  },
+  "messages": {
+    "add": "Added: {users}",
+    "ban": "Banned: {users}",
+    "un-ban": "Un banned {users}",
+    "remove": "Removed: {users}"
+  },
+  "forms": {
+    "profile": {
+      "title": "Whitelist - Profile: {profile}"
+    },
+    "action": {
+      "title": "Manage {name}",
+      "back": "Back",
+      "remove": "Remove"
+    },
+    "ban": {
+      "title": "Ban: {name}",
+      "for": "For days:",
+      "reason": "Reason of the ban",
+      "confirm": "Confirm"
+    },
+    "ban-list": {
+      "title": "Banned"
+    },
+    "ban-action": {
+      "title": "Banned {name}",
+      "back": "Back",
+      "un-ban": "Un ban"
+    }
+  },
+  "kick_message": "You are not whitelisted on this server."
+}
+  
