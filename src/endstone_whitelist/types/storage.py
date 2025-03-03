@@ -61,8 +61,8 @@ class WLStorage:
                 self.whitelist = [x for x in self.whitelist if x != name]
             
         SetConfiguration(profile, self.whitelist)
+        self._kick()
 
-        self.check_all()
         return removed
 
     def ban(self, name: str, reason: str, until: float = None):
@@ -75,9 +75,19 @@ class WLStorage:
                 "reason": reason, 
                 "devices": devices
             }
+            
         SetConfiguration(profile, self.ban_list)
+        self._kick()
 
-        self.check_all()
+    def _kick(self):
+        kick_message = self.config["kick_message"]
+        banned_message = self.config["ban"]["message"]
+        for player in self.plugin.server.online_players:
+            if player.name not in self.whitelist: 
+                player.kick(kick_message)
+            if player.name in self.ban_list: 
+                reason = player.ban_list[player.name]["reason"]
+                player.kick(banned_message.format(reason))
 
     def un_ban(self, name: str):
         profile = self.config["ban"]["profile"]
@@ -99,14 +109,15 @@ class WLStorage:
         return True, None
     
     def _banned(self, player: Player) -> tuple[bool, str | None]:
-        message = None
+        message: str = None
         for name, data in self.ban_list.items():
             until = data["until"]
             reason = data["reason"]
             devices = data["devices"]
+            print(reason)
             message = self.config["ban"]["message"].format(reason)
 
-            if until < time.time():
+            if until is not None and until < time.time():
                 del self.ban_list[name]
                 continue
 
@@ -141,9 +152,10 @@ class WLStorage:
         should_ban = False
         for name, data in self.whitelist.items():
             devices: list = data["devices"]
-            if any(map(lambda ud: ud in devices, user_devices)):
-                self.ban(name, reason)
-                should_ban = True
+            if player.name != name:
+                if any(map(lambda ud: ud in devices, user_devices)):
+                    self.ban(name, reason)
+                    should_ban = True
 
         if should_ban:
             self.ban(player.name, reason)

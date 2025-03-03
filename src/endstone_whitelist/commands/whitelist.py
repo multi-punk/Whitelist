@@ -15,7 +15,7 @@ class WhitelistCommandExecutor(CommandExecutor):
         message: str | None = None
         config = storage.config
 
-        if len(args) >= 2:
+        if len(args) >= 2 and actionType != "view":
             users = []
             names = args[1]
             names = names.split(",")

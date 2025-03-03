@@ -45,7 +45,7 @@ def send_profile_view(player: CommandSender):
         action=send_action_form,
         profile=profile,
         title=title,
-        user_list=storage.ban_list
+        user_list=storage.whitelist
     )
 
 def send_ban_form(player: Player, name: str):
