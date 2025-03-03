@@ -17,12 +17,12 @@ class WhitelistPlugin(Plugin):
             "description": "Whitelist player",
             "usages": [ 
                 "/wl (add|remove)<name: Action> <names: message>" ,
-                "/wl profile <name: str>",
-                "/wl check",
-                "/wl view (profile|ban)<name: Type>",
+                "/wl (profile)<name: Action> <name: str>",
+                "/wl (check)<name: Action>",
+                "/wl (view)<name: Action> (profile|ban)<name: Type>",
 
-                "/wl ban <name: str> <reason: message>",
-                "/wl un-ban <name: str>"
+                "/wl (ban)<name: Action> <name: str> <reason: message>",
+                "/wl (un-ban)<name: Action> <name: str>"
             ],
             "permissions": ["wl.command.use"]
         }
