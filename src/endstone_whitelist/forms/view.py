@@ -2,6 +2,7 @@ from endstone import Player
 from endstone.form import *
 from endstone.command import CommandSender
 from endstone_whitelist.types.storage import storage
+import ujson as json
 
 def send_view_form(player: CommandSender, action: any, profile: str, title: str, user_list: list):
     if not isinstance(player, Player): return
@@ -17,7 +18,9 @@ def send_view_form(player: CommandSender, action: any, profile: str, title: str,
     )
 
     form = ActionForm(
-        title=title.format(profile=profile),
+        title=title.format(**{
+            "profile": profile
+        }),
         buttons=buttons
     )
 
@@ -50,10 +53,10 @@ def send_profile_view(player: CommandSender):
 
 def send_ban_form(player: Player, name: str):
     form_settings = storage.config["forms"]["ban"]
-    title = form_settings["title"]
-    for_text = form_settings["for"]
-    reason_text = form_settings["reason"]
-    confirm_text = form_settings["confirm"]
+    title: str = form_settings["title"]
+    for_text: str = form_settings["for"]
+    reason_text: str = form_settings["reason"]
+    confirm_text: str = form_settings["confirm"]
     controls = [
         TextInput(
             label=reason_text,
@@ -75,7 +78,9 @@ def send_ban_form(player: Player, name: str):
         send_profile_view(player)
 
     form = ModalForm(
-        title=title.format(name),
+        title=title.format(**{
+            "name": name
+        }),
         controls=controls,
         on_submit=lambda p, d, n=name: process(p, d, n),
         submit_button=confirm_text
@@ -84,12 +89,16 @@ def send_ban_form(player: Player, name: str):
     player.send_form(form)
 
 def send_action_form(player: Player, name: str):
-    profile = storage.config["profile"]
+    profile: str = storage.config["profile"]
     form_settings = storage.config["forms"]["action"]
-    title = form_settings["title"]
-    ban_text = form_settings["ban"]
-    back_text = form_settings["back"]
-    remove_text = form_settings["remove"]
+    title: str = form_settings["title"]
+    ban_text: str = form_settings["ban"]
+    back_text: str = form_settings["back"]
+    remove_text: str = form_settings["remove"]
+
+    def remove(player: Player, names: list, profile: str):
+        storage.remove(names, profile)
+        send_profile_view(player)
 
     buttons = [
         ActionForm.Button(
@@ -98,7 +107,7 @@ def send_action_form(player: Player, name: str):
         ),
         ActionForm.Button(
             text=remove_text,
-            on_click=lambda _, n=name, p=profile: storage.remove([n], p)
+            on_click=lambda p, n=name, pr=profile: remove(p, [n], pr),
         ),
         ActionForm.Button(
             text=ban_text,
@@ -107,7 +116,9 @@ def send_action_form(player: Player, name: str):
     ]
 
     form = ActionForm(
-        title=title.format(name=name),
+        title=title.format(**{
+            "name": name
+        }),
         buttons=buttons
     )
     
@@ -115,9 +126,9 @@ def send_action_form(player: Player, name: str):
 
 def send_ban_action_form(player: Player, name: str):
     form_settings = storage.config["forms"]["ban-action"]
-    title = form_settings["title"]
-    back_text = form_settings["back"]
-    un_ban_text = form_settings["un-ban"]
+    title: str = form_settings["title"]
+    back_text: str = form_settings["back"]
+    un_ban_text: str = form_settings["un-ban"]
 
     def un_ban(player: Player, name: str):
         storage.un_ban(name) 
@@ -135,7 +146,9 @@ def send_ban_action_form(player: Player, name: str):
     ]
 
     form = ActionForm(
-        title=title.format(name=name),
+        title=title.format(**{
+            "name": name,
+        }),
         buttons=buttons
     )
     

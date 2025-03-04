@@ -22,6 +22,7 @@
     },
     "action": {
       "title": "Manage {name}",
+      "ban": "Ban",
       "back": "Back",
       "remove": "Remove"
     },

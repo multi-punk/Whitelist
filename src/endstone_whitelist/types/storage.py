@@ -80,14 +80,16 @@ class WLStorage:
         self._kick()
 
     def _kick(self):
-        kick_message = self.config["kick_message"]
-        banned_message = self.config["ban"]["message"]
+        kick_message: str = self.config["kick_message"]
+        banned_message: str = self.config["ban"]["message"]
         for player in self.plugin.server.online_players:
             if player.name not in self.whitelist: 
                 player.kick(kick_message)
             if player.name in self.ban_list: 
-                reason = player.ban_list[player.name]["reason"]
-                player.kick(banned_message.format(reason))
+                reason = self.ban_list[player.name]["reason"]
+                player.kick(banned_message.format(**{
+                    "reason": reason
+                }))
 
     def un_ban(self, name: str):
         profile = self.config["ban"]["profile"]
@@ -114,8 +116,10 @@ class WLStorage:
             until = data["until"]
             reason = data["reason"]
             devices = data["devices"]
-            print(reason)
-            message = self.config["ban"]["message"].format(reason)
+            message = self.config["ban"]["message"]
+            message = message.format(**{
+                "reason": reason
+            })
 
             if until is not None and until < time.time():
                 del self.ban_list[name]
