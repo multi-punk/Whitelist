@@ -17,6 +17,10 @@
     "remove": "Removed: {users}"
   },
   "forms": {
+    "view": {
+      "next": "Next",
+      "previous": "Previous"
+    },
     "profile": {
       "title": "Whitelist - Profile: {profile}"
     },

@@ -4,18 +4,91 @@ from endstone.command import CommandSender
 from endstone_whitelist.types.storage import storage
 import ujson as json
 
-def send_view_form(player: CommandSender, action: any, profile: str, title: str, user_list: list):
+class viewFormData():
+    player: CommandSender 
+    action: any
+    title: str
+    profile: str
+    user_list: list
+    cursor: int = 0
+    chunk_size: int
+    chunks: list[list]
+
+    def __init__(
+            self, 
+            player: CommandSender, 
+            action: any, 
+            title: str, 
+            profile: str,
+            user_list: list, 
+            chunk_size: int
+        ):
+        self.title = title
+        self.player = player
+        self.action = action
+        self.profile = profile
+        self.user_list = user_list
+        self.chunk_size = chunk_size
+
+        self.chunks = self._chunked(self.user_list, self.chunk_size)
+
+    def _chunked(lst, chunk_size):
+        for i in range(0, len(lst), chunk_size):
+            yield lst[i:i + chunk_size]
+
+    def move_cursor(self, move: int):
+        if self.cursor + move < 0:
+            self.cursor = 0
+        else:
+            self.cursor = self.cursor + move
+        if self.cursor + move > self.chunks.count():
+            self.cursor = self.chunks.count()
+
+    def is_start(self):
+        return self.cursor == 0
+    
+    def is_end(self):
+        return self.cursor == self.chunks.count() - 1
+        
+
+def send_view_form(data: viewFormData):
+    title = data.title
+    player = data.player
+    action = data.action
+    profile = data.profile
+
     if not isinstance(player, Player): return
 
-    buttons = list(
+    buttons: list[ActionForm.Button] = []
+    form_settings = storage.config["forms"]["view"]
+    next_text = form_settings["next"]
+    previous_text = form_settings["previous"]
+
+    if not data.is_start():
+        data.move_cursor(-1)
+        buttons.append(ActionForm.Button(
+                text=previous_text,
+                on_click=lambda _: send_view_form(data)
+            )
+        )
+
+    buttons += list(
         map(lambda name: 
             ActionForm.Button(
                 text=name,
                 on_click=lambda p, n=name: action(p, n),
             ), 
-            user_list
+            data.chunks[data.cursor]
         )
     )
+
+    if not data.is_end():
+        data.move_cursor(1)
+        buttons.append(ActionForm.Button(
+                text=next_text,
+                on_click=lambda _: send_view_form(data)
+            )
+        )
 
     form = ActionForm(
         title=title.format(**{
@@ -31,11 +104,14 @@ def send_ban_view(player: CommandSender):
     title = form_settings["title"]
 
     send_view_form(
-        player=player,
-        action=send_ban_action_form,
-        profile="",
-        title=title,
-        user_list=storage.ban_list
+        viewFormData(
+            player=player,
+            action=send_ban_action_form,
+            profile="",
+            title=title,
+            user_list=storage.ban_list,
+            chunk_size=10
+        )
     )
 
 def send_profile_view(player: CommandSender):
@@ -44,11 +120,14 @@ def send_profile_view(player: CommandSender):
     profile = storage.config["profile"]
     
     send_view_form(
-        player=player,
-        action=send_action_form,
-        profile=profile,
-        title=title,
-        user_list=storage.whitelist
+        viewFormData(
+            player=player,
+            action=send_action_form,
+            profile=profile,
+            title=title,
+            user_list=storage.whitelist,
+            chunk_size=10
+        )
     )
 
 def send_ban_form(player: Player, name: str):

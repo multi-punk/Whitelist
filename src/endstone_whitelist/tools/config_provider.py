@@ -13,6 +13,6 @@ def GetConfiguration(file: str) -> dict | list:
     
 def SetConfiguration(file: str, data: dict | list):
     file_path = f"{configuration_path}{file}.json"
-    with open(file_path, "w") as jsonFile:
+    with open(file_path, "w", encoding="utf-8") as jsonFile:
         json.dump(data, jsonFile, ensure_ascii=True, indent=4)
         jsonFile.close()
