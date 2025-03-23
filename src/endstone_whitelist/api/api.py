@@ -10,6 +10,7 @@ def auth(request: Request):
     header = request.headers.get('SERVER-API-KEY')
     if header != config["key"]:
         return False
+    return True
     
 def data(request: Request) -> tuple[str, str]:
     username = json.loads(request.data)["username"]

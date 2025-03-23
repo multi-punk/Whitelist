@@ -32,23 +32,34 @@ class viewFormData():
 
         self.chunks = self._chunked(self.user_list, self.chunk_size)
 
-    def _chunked(lst, chunk_size):
-        for i in range(0, len(lst), chunk_size):
-            yield lst[i:i + chunk_size]
+    def _chunked(self, lst: list, chunk_size: int):
+        chunks = []
+        chunk = []
+        
+        for item in lst:
+            chunk.append(item)
+            if len(chunk) == chunk_size:
+                chunks.append(chunk)
+                chunk = []
+        
+        if chunk:
+            chunks.append(chunk)
+        
+        return chunks
 
     def move_cursor(self, move: int):
         if self.cursor + move < 0:
             self.cursor = 0
         else:
             self.cursor = self.cursor + move
-        if self.cursor + move > self.chunks.count():
-            self.cursor = self.chunks.count()
+        if self.cursor + move > len(self.chunks):
+            self.cursor = len(self.chunks)
 
     def is_start(self):
         return self.cursor == 0
     
     def is_end(self):
-        return self.cursor == self.chunks.count() - 1
+        return self.cursor == len(self.chunks) - 1
         
 
 def send_view_form(data: viewFormData):
@@ -92,7 +103,8 @@ def send_view_form(data: viewFormData):
 
     form = ActionForm(
         title=title.format(**{
-            "profile": profile
+            "profile": profile,
+            "count": len(data.user_list)
         }),
         buttons=buttons
     )

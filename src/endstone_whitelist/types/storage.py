@@ -48,7 +48,6 @@ class WLStorage:
                 }
 
         SetConfiguration(profile, self.whitelist)
-
         return added
             
 
@@ -58,7 +57,7 @@ class WLStorage:
         for name in names:
             if name in self.whitelist:
                 removed.append(name)
-                self.whitelist = [x for x in self.whitelist if x != name]
+                del self.whitelist[name]
             
         SetConfiguration(profile, self.whitelist)
         self._kick()
@@ -112,6 +111,7 @@ class WLStorage:
     
     def _banned(self, player: Player) -> tuple[bool, str | None]:
         message: str = None
+        ban_profile = self.config["ban"]["profile"]
         for name, data in self.ban_list.items():
             until = data["until"]
             reason = data["reason"]
@@ -128,6 +128,7 @@ class WLStorage:
             def add_to_devices():
                 if player.device_id not in devices:
                     devices.append[player.device_id]
+                    SetConfiguration(ban_profile, self.ban_list)
 
             def add_to_ban_list():
                 if player.name not in self.ban_list:
@@ -145,13 +146,19 @@ class WLStorage:
         return False, message
     
     def _multi_account(self, player: Player):
+        profile = self.config["profile"]
         multi_account = self.config["ban"]["multi-account"]
-        if not multi_account["ban"]: return
+
         user = self.whitelist[player.name]
         reason = multi_account["reason"]
         user_devices: list = user["devices"]
+
         if player.device_id not in user_devices:
             user_devices.append(player.device_id)
+            SetConfiguration(profile, self.whitelist)
+
+
+        if not multi_account["ban"]: return
 
         should_ban = False
         for name, data in self.whitelist.items():

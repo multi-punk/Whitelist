@@ -22,7 +22,7 @@
       "previous": "Previous"
     },
     "profile": {
-      "title": "Whitelist - Profile: {profile}"
+      "title": "Whitelist - Profile: {profile} ({count})"
     },
     "action": {
       "title": "Manage {name}",
@@ -37,7 +37,7 @@
       "confirm": "Confirm"
     },
     "ban-list": {
-      "title": "Banned"
+      "title": "Banned ({count})"
     },
     "ban-action": {
       "title": "Banned {name}",
