@@ -6,7 +6,7 @@ import ujson as json
 
 class viewFormData():
     player: CommandSender 
-    action: any
+    action: any # type: ignore
     title: str
     profile: str
     user_list: list
@@ -17,7 +17,7 @@ class viewFormData():
     def __init__(
             self, 
             player: CommandSender, 
-            action: any, 
+            action: any,  # type: ignore
             title: str, 
             profile: str,
             user_list: list, 
@@ -70,14 +70,14 @@ def send_view_form(data: viewFormData):
 
     if not isinstance(player, Player): return
 
-    buttons: list[ActionForm.Button] = []
+    buttons: list[Button] = []
     form_settings = storage.config["forms"]["view"]
     next_text = form_settings["next"]
     previous_text = form_settings["previous"]
 
     if not data.is_start():
         data.move_cursor(-1)
-        buttons.append(ActionForm.Button(
+        buttons.append(Button(
                 text=previous_text,
                 on_click=lambda _: send_view_form(data)
             )
@@ -85,7 +85,7 @@ def send_view_form(data: viewFormData):
 
     buttons += list(
         map(lambda name: 
-            ActionForm.Button(
+            Button(
                 text=name,
                 on_click=lambda p, n=name: action(p, n),
             ), 
@@ -95,7 +95,7 @@ def send_view_form(data: viewFormData):
 
     if not data.is_end():
         data.move_cursor(1)
-        buttons.append(ActionForm.Button(
+        buttons.append(Button(
                 text=next_text,
                 on_click=lambda _: send_view_form(data)
             )
@@ -106,7 +106,7 @@ def send_view_form(data: viewFormData):
             "profile": profile,
             "count": len(data.user_list)
         }),
-        buttons=buttons
+        buttons=buttons # type: ignore
     )
 
     player.send_form(form)
@@ -121,7 +121,7 @@ def send_ban_view(player: CommandSender):
             action=send_ban_action_form,
             profile="",
             title=title,
-            user_list=storage.ban_list,
+            user_list=storage.ban_list, # type: ignore
             chunk_size=10
         )
     )
@@ -137,7 +137,7 @@ def send_profile_view(player: CommandSender):
             action=send_action_form,
             profile=profile,
             title=title,
-            user_list=storage.whitelist,
+            user_list=storage.whitelist, # type: ignore
             chunk_size=10
         )
     )
@@ -172,7 +172,7 @@ def send_ban_form(player: Player, name: str):
         title=title.format(**{
             "name": name
         }),
-        controls=controls,
+        controls=controls, # type: ignore
         on_submit=lambda p, d, n=name: process(p, d, n),
         submit_button=confirm_text
     )
@@ -192,15 +192,15 @@ def send_action_form(player: Player, name: str):
         send_profile_view(player)
 
     buttons = [
-        ActionForm.Button(
+        Button(
             text=back_text,
             on_click=lambda p: send_profile_view(p),
         ),
-        ActionForm.Button(
+        Button(
             text=remove_text,
             on_click=lambda p, n=name, pr=profile: remove(p, [n], pr),
         ),
-        ActionForm.Button(
+        Button(
             text=ban_text,
             on_click=lambda p, n=name: send_ban_form(p, n),
         )
@@ -210,7 +210,7 @@ def send_action_form(player: Player, name: str):
         title=title.format(**{
             "name": name
         }),
-        buttons=buttons
+        buttons=buttons # type: ignore
     )
     
     player.send_form(form)
@@ -226,11 +226,11 @@ def send_ban_action_form(player: Player, name: str):
         send_ban_view(player)
 
     buttons = [
-        ActionForm.Button(
+        Button(
             text=back_text,
             on_click=lambda p: send_ban_view(p),
         ),
-        ActionForm.Button(
+        Button(
             text=un_ban_text,
             on_click=lambda p, n=name: un_ban(p, n),
         )
@@ -240,7 +240,7 @@ def send_ban_action_form(player: Player, name: str):
         title=title.format(**{
             "name": name,
         }),
-        buttons=buttons
+        buttons=buttons # type: ignore
     )
     
     player.send_form(form)
