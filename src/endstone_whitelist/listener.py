@@ -11,7 +11,7 @@ class Listener:
 
     @event_handler
     def on_player_join(self, event: PlayerLoginEvent):
-
+        if not storage.is_enabled(): return
         can_pass, message = storage.check(event.player)
         if can_pass: return
         event.kick_message = message or ''
