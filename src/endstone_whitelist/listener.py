@@ -11,9 +11,10 @@ class Listener:
 
     @event_handler
     def on_player_join(self, event: PlayerLoginEvent):
+
         can_pass, message = storage.check(event.player)
         if can_pass: return
-        event.kick_message = message
+        event.kick_message = message or ''
         event.is_cancelled = True
 
 

@@ -9,9 +9,24 @@ class WLStorage:
     whitelist: dict = {}
 
     def __init__(self):
-        self.config = GetConfiguration("config")
-        self.ban_list = GetConfiguration(self.config["ban"]["profile"])
+        self.config = GetConfiguration("config") # type: ignore
+        self.ban_list = GetConfiguration(self.config["ban"]["profile"]) # type: ignore
         self.reload_whitelist()
+
+    def is_enabled(self):
+        enabled = self.config.get("is_enabled")
+        if enabled is True or None:
+            return True
+        else:
+            return False
+
+    def enable(self):
+        self.config["is_enabled"] = True
+        SetConfiguration("config", self.config)
+
+    def disable(self):
+        self.config["is_enabled"] = False
+        SetConfiguration("config", self.config)
 
     def init(self, plugin: Plugin):
         self.plugin = plugin
@@ -23,7 +38,7 @@ class WLStorage:
 
     def reload_whitelist(self):
         try:
-            self.whitelist = GetConfiguration(self.config["profile"])
+            self.whitelist = GetConfiguration(self.config["profile"]) # type: ignore
         except:
             self.whitelist = {}
 
@@ -64,7 +79,7 @@ class WLStorage:
 
         return removed
 
-    def ban(self, name: str, reason: str, until: float = None):
+    def ban(self, name: str, reason: str, until: float | None = None):
         if name not in self.whitelist: return
         profile = self.config["ban"]["profile"]
         devices = self.whitelist[name]["devices"]
@@ -110,15 +125,15 @@ class WLStorage:
         return True, None
     
     def _banned(self, player: Player) -> tuple[bool, str | None]:
-        message: str = None
+        message: str | None = None
         ban_profile = self.config["ban"]["profile"]
         for name, data in self.ban_list.items():
             until = data["until"]
             reason = data["reason"]
             devices = data["devices"]
             message = self.config["ban"]["message"]
-            message = message.format(**{
-                "reason": reason
+            message = message.format(**{ # type: ignore
+                "reason": reason or ''
             })
 
             if until is not None and until < time.time():
@@ -172,10 +187,10 @@ class WLStorage:
             self.ban(player.name, reason)
 
 
-    def check_all(self) -> bool:
+    def check_all(self):
         for player in self.plugin.server.online_players:
             allowed, message = self.check(player)
             if not allowed:
-                player.kick(message)
+                player.kick(message or '')
 
 storage = WLStorage()    

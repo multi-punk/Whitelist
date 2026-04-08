@@ -35,9 +35,13 @@ class WhitelistCommandExecutor(CommandExecutor):
             elif actionType == "un-ban":
                 users_list = names
                 storage.un_ban(names[0]) 
+            elif actionType == "enable":
+                storage.enable()
+            elif actionType == "disable":
+                storage.disable()
 
             message = config["messages"][actionType]
-            message = message.format(**{
+            message = message.format(**{ # type: ignore
                 "users": ", ".join(users_list)
             })
 
@@ -49,7 +53,7 @@ class WhitelistCommandExecutor(CommandExecutor):
             else: 
                 send_ban_view(sender)
         elif actionType == "check":
-            storage.check_all(self._plugin)
+            storage.check_all()
 
         if message is not None:
             sender.send_message(message)

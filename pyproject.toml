@@ -1,9 +1,6 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/endstone_whitelist"]
 
 [project]
 name = "endstone_whitelist"
@@ -13,5 +10,14 @@ dependencies = [
     "ujson"
 ]
 
+[project.optional-dependencies]
+dev = ["endstone", "ruff"]
+
 [project.entry-points."endstone"]
 whitelist = "endstone_whitelist:WhitelistPlugin"
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["I", "E", "F"]
