@@ -1,4 +1,3 @@
-is_enabled = true
 kick_message = "You are not whitelisted on this server."
 
 [ban]
