@@ -1,6 +1,7 @@
-from endstone.plugin import Plugin
+from typing import TYPE_CHECKING
 
-from endstone_whitelist.commands.whitelist import WhitelistCommandExecutor
+from .whitelist import WhitelistCommandExecutor 
+if TYPE_CHECKING: from endstone_whitelist.plugin import WhitelistPlugin 
 
-def register_commands(plugin: Plugin):
+def register_commands(plugin: WhitelistPlugin):
     plugin.get_command("wl").executor = WhitelistCommandExecutor(plugin)

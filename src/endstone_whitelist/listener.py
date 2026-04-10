@@ -1,20 +1,20 @@
+from typing import TYPE_CHECKING
 from endstone.event import event_handler, PlayerLoginEvent
-from endstone.plugin import Plugin
-from endstone_whitelist.types.storage import storage
 
-from endstone_whitelist.tools.config_provider import GetConfiguration
-
+if TYPE_CHECKING: from endstone_whitelist.plugin import WhitelistPlugin
 
 class Listener:
-    def __init__(self, plugin: Plugin):
+    def __init__(self, plugin: "WhitelistPlugin"):
         self._plugin = plugin
+        self._storage = plugin.storage
 
     @event_handler
-    def on_player_join(self, event: PlayerLoginEvent):
-        if not storage.is_enabled(): return
-        can_pass, message = storage.check(event.player)
-        if can_pass: return
-        event.kick_message = message or ''
-        event.is_cancelled = True
-
-
+    def on_player_login(self, event: PlayerLoginEvent):
+        if not self._storage.is_enabled():
+            return
+            
+        can_pass, message = self._storage.check(event.player)
+        
+        if not can_pass:
+            event.kick_message = message or "You are not whitelisted on this server."
+            event.is_cancelled = True

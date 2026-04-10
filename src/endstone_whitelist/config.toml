@@ -1,0 +1,10 @@
+is_enabled = true
+kick_message = "You are not whitelisted on this server."
+
+[ban]
+profile = "bans"
+message = "You are banned. Reason: {reason}"
+
+[ban.multi-account]
+ban = true
+reason = "Multi-account / Alt bypass"

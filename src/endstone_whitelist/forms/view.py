@@ -1,246 +1,142 @@
 from endstone import Player
 from endstone.form import *
 from endstone.command import CommandSender
-from endstone_whitelist.types.storage import storage
 import ujson as json
 
-class viewFormData():
-    player: CommandSender 
-    action: any # type: ignore
-    title: str
-    profile: str
-    user_list: list
-    cursor: int = 0
-    chunk_size: int
-    chunks: list[list]
-
+class ViewFormData:
     def __init__(
             self, 
-            player: CommandSender, 
+            player: Player, 
             action: any,  # type: ignore
             title: str, 
             profile: str,
             user_list: list, 
-            chunk_size: int
+            chunk_size: int,
+            plugin: any # type: ignore
         ):
         self.title = title
         self.player = player
         self.action = action
         self.profile = profile
-        self.user_list = user_list
+        self.user_list = list(user_list)
         self.chunk_size = chunk_size
-
+        self.plugin = plugin
+        self.cursor = 0
         self.chunks = self._chunked(self.user_list, self.chunk_size)
 
     def _chunked(self, lst: list, chunk_size: int):
-        chunks = []
-        chunk = []
-        
-        for item in lst:
-            chunk.append(item)
-            if len(chunk) == chunk_size:
-                chunks.append(chunk)
-                chunk = []
-        
-        if chunk:
-            chunks.append(chunk)
-        
-        return chunks
-
-    def move_cursor(self, move: int):
-        if self.cursor + move < 0:
-            self.cursor = 0
-        else:
-            self.cursor = self.cursor + move
-        if self.cursor + move > len(self.chunks):
-            self.cursor = len(self.chunks)
+        return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
 
     def is_start(self):
         return self.cursor == 0
     
     def is_end(self):
-        return self.cursor == len(self.chunks) - 1
-        
+        return not self.chunks or self.cursor == len(self.chunks) - 1
 
-def send_view_form(data: viewFormData):
-    title = data.title
+def send_view_form(data: ViewFormData):
     player = data.player
-    action = data.action
-    profile = data.profile
-
-    if not isinstance(player, Player): return
+    if not isinstance(player, Player): 
+        return
 
     buttons: list[Button] = []
-    form_settings = storage.config["forms"]["view"]
-    next_text = form_settings["next"]
-    previous_text = form_settings["previous"]
 
+    # Navigation: Previous
     if not data.is_start():
-        data.move_cursor(-1)
-        buttons.append(Button(
-                text=previous_text,
-                on_click=lambda _: send_view_form(data)
-            )
-        )
+        def go_back(p):
+            data.cursor -= 1
+            send_view_form(data)
+        buttons.append(Button(text="<- Previous Page", on_click=go_back))
 
-    buttons += list(
-        map(lambda name: 
-            Button(
-                text=name,
-                on_click=lambda p, n=name: action(p, n),
-            ), 
-            data.chunks[data.cursor]
-        )
-    )
+    # User Buttons
+    if data.chunks:
+        for name in data.chunks[data.cursor]:
+            buttons.append(Button(
+                text=f"User: {name}",
+                on_click=lambda p, n=name: data.action(p, n, data.plugin)
+            ))
 
+    # Navigation: Next
     if not data.is_end():
-        data.move_cursor(1)
-        buttons.append(Button(
-                text=next_text,
-                on_click=lambda _: send_view_form(data)
-            )
-        )
+        def go_next(p):
+            data.cursor += 1
+            send_view_form(data)
+        buttons.append(Button(text="Next Page ->", on_click=go_next))
 
     form = ActionForm(
-        title=title.format(**{
-            "profile": profile,
-            "count": len(data.user_list)
-        }),
+        title=data.title.replace("{profile}", data.profile).replace("{count}", str(len(data.user_list))),
         buttons=buttons # type: ignore
     )
-
     player.send_form(form)
 
-def send_ban_view(player: CommandSender):
-    form_settings = storage.config["forms"]["ban-list"]
-    title = form_settings["title"]
-
+def send_ban_view(player: Player, plugin: any): # type: ignore
     send_view_form(
-        viewFormData(
+        ViewFormData(
             player=player,
             action=send_ban_action_form,
-            profile="",
-            title=title,
-            user_list=storage.ban_list, # type: ignore
-            chunk_size=10
+            profile="Bans",
+            title="Banned Players ({count})",
+            user_list=plugin.storage.ban_list.keys(),
+            chunk_size=10,
+            plugin=plugin
         )
     )
 
-def send_profile_view(player: CommandSender):
-    form_settings = storage.config["forms"]["profile"]
-    title = form_settings["title"]
-    profile = storage.config["profile"]
-    
+def send_profile_view(player: Player, plugin: any): # type: ignore
+    profile_name = plugin.storage.state.get("profile", "default")
     send_view_form(
-        viewFormData(
+        ViewFormData(
             player=player,
             action=send_action_form,
-            profile=profile,
-            title=title,
-            user_list=storage.whitelist, # type: ignore
-            chunk_size=10
+            profile=profile_name,
+            title="Whitelist: {profile} ({count})",
+            user_list=plugin.storage.whitelist.keys(),
+            chunk_size=10,
+            plugin=plugin
         )
     )
 
-def send_ban_form(player: Player, name: str):
-    form_settings = storage.config["forms"]["ban"]
-    title: str = form_settings["title"]
-    for_text: str = form_settings["for"]
-    reason_text: str = form_settings["reason"]
-    confirm_text: str = form_settings["confirm"]
+def send_ban_form(player: Player, name: str, plugin: any): # type: ignore
     controls = [
-        TextInput(
-            label=reason_text,
-        ),
-        TextInput(
-            label=for_text,
-            placeholder="0"
-        ),
+        TextInput(label="Reason for ban:"),
+        TextInput(label="Duration in days (0 for permanent):", placeholder="0"),
     ]
 
-    def process(player: Player, data: str, name: str):
-        json_data: list[str] = json.loads(data)
-        days = json_data[1]
-        reason = json_data[0]
-        days_as_number = None
-        if days.isnumeric():
-            days_as_number = float(days)
-        storage.ban(name, reason, days_as_number)
-        send_profile_view(player)
+    def process(p: Player, data_json: str):
+        data = json.loads(data_json)
+        reason = data[0] or "No reason provided"
+        days = float(data[1]) if data[1].replace('.','',1).isdigit() else 0.0
+        plugin.storage.ban(name, reason, days)
+        send_profile_view(p, plugin)
 
     form = ModalForm(
-        title=title.format(**{
-            "name": name
-        }),
+        title=f"Ban Player: {name}",
         controls=controls, # type: ignore
-        on_submit=lambda p, d, n=name: process(p, d, n),
-        submit_button=confirm_text
+        submit_button="Confirm Ban",
+        on_submit=process
     )
-
     player.send_form(form)
 
-def send_action_form(player: Player, name: str):
-    profile: str = storage.config["profile"]
-    form_settings = storage.config["forms"]["action"]
-    title: str = form_settings["title"]
-    ban_text: str = form_settings["ban"]
-    back_text: str = form_settings["back"]
-    remove_text: str = form_settings["remove"]
-
-    def remove(player: Player, names: list, profile: str):
-        storage.remove(names, profile)
-        send_profile_view(player)
-
+def send_action_form(player: Player, name: str, plugin: any): # type: ignore
     buttons = [
-        Button(
-            text=back_text,
-            on_click=lambda p: send_profile_view(p),
-        ),
-        Button(
-            text=remove_text,
-            on_click=lambda p, n=name, pr=profile: remove(p, [n], pr),
-        ),
-        Button(
-            text=ban_text,
-            on_click=lambda p, n=name: send_ban_form(p, n),
-        )
+        Button(text="Back", on_click=lambda p: send_profile_view(p, plugin)),
+        Button(text="Remove from Whitelist", on_click=lambda p: (plugin.storage.remove([name]), send_profile_view(p, plugin))),
+        Button(text="Ban Player", on_click=lambda p: send_ban_form(p, name, plugin))
     ]
 
     form = ActionForm(
-        title=title.format(**{
-            "name": name
-        }),
+        title=f"Managing: {name}",
         buttons=buttons # type: ignore
     )
-    
     player.send_form(form)
 
-def send_ban_action_form(player: Player, name: str):
-    form_settings = storage.config["forms"]["ban-action"]
-    title: str = form_settings["title"]
-    back_text: str = form_settings["back"]
-    un_ban_text: str = form_settings["un-ban"]
-
-    def un_ban(player: Player, name: str):
-        storage.un_ban(name) 
-        send_ban_view(player)
-
+def send_ban_action_form(player: Player, name: str, plugin: any): # type: ignore
     buttons = [
-        Button(
-            text=back_text,
-            on_click=lambda p: send_ban_view(p),
-        ),
-        Button(
-            text=un_ban_text,
-            on_click=lambda p, n=name: un_ban(p, n),
-        )
+        Button(text="Back", on_click=lambda p: send_ban_view(p, plugin)),
+        Button(text="Unban Player", on_click=lambda p: (plugin.storage.un_ban(name), send_ban_view(p, plugin)))
     ]
 
     form = ActionForm(
-        title=title.format(**{
-            "name": name,
-        }),
+        title=f"Banned User: {name}",
         buttons=buttons # type: ignore
     )
-    
     player.send_form(form)

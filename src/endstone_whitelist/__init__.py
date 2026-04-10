@@ -1,3 +1,3 @@
-from endstone_whitelist.whitelist_plugin import WhitelistPlugin
+from endstone_whitelist.plugin import WhitelistPlugin
 
 __all__ = ["WhitelistPlugin"]
